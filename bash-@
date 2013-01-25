@@ -1,4 +1,5 @@
 #!/bin/bash
+# Evgeny.Stepanischev Jan 2013 http://bolknote.ru/
 
 Class.rename() {
     Class.copy "$1" "$2"
