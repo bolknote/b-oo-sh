@@ -1,6 +1,8 @@
 #!/bin/bash
 # Evgeny.Stepanischev Jan 2013 http://bolknote.ru/
 
+:|sed -E '' 2>&- && Class.sed() { sed -E "$@"; } || Class.sed() { sed -r "$@"; }
+
 Class.rename() {
     Class.copy "$1" "$2"
     unset -f $1
@@ -12,13 +14,13 @@ Class.copy() {
 
         eval "$2() { local This=$3 Parent=$3.Parent Self=$4; $(declare -f $1 |
             tail -f +4 | # delete local Self
-            sed -E 's/\{?This\[(@'${!vars}')\]\}?/'${3#*.}'__\1/g')"
+            Class.sed 's/\{?This\[(@'${!vars}')\]\}?/'${3#*.}'__\1/g')"
     else
         local vars=CLASSES_V_${2//.*}
 
         eval "$2() { local Self=${2//.*}; $(declare -f $1 |
             tail -f +3 |
-            sed -E 's/\{?Self\[(@'${!vars}')\]\}?/'${2//.*}'_Static_\1/g')"
+            Class.sed 's/\{?Self\[(@'${!vars}')\]\}?/'${2//.*}'_Static_\1/g')"
     fi
 }
 
