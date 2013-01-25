@@ -1,4 +1,7 @@
-. bash-@
+#!/bin/bash
+# Evgeny.Stepanischev Jan 2013 http://bolknote.ru/
+
+. b-oo.sh
 
 @Class Base
     @Dim cnt
@@ -57,6 +60,12 @@ $car.GetCnt
 $dog.say
 $dog.GetCnt
 
+Dog.New anothedog
+
+$anothedog.say
+$anothedog.say
+
+$anothedog.GetCnt
 
 
 
