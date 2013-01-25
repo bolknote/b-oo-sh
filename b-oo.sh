@@ -40,7 +40,7 @@ Class.append() {
         local name=( $(
             awk -F ' *; *| *\\(' \
             'NR=='$line' {print $2}
-            NR=='$line'+1 {gsub("[ \t]", "", $1);print $1}'\
+            NR=='$line'+1 {gsub("[ \t]", "", $1);print $1;exit}'\
             "$file")
         )
 
