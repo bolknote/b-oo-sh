@@ -79,7 +79,7 @@ Class.New() {
     local line=${BASH_LINENO[1]}
     local methods=CLASSES_M_$1
 
-    local obj=Object.f$(echo -n "$1" $file $line $RANDOM $(date) | md5 | tr -d '=/' )
+    local obj=Object.f$(md5 <<< "$1 $file $line $RANDOM $(date)" | tr -d '=/' )
 
     for name in ${!methods}; do
         local newname=$obj.${name##*.}
