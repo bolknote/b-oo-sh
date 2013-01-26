@@ -1,9 +1,6 @@
 #!/bin/bash
 # Evgeny.Stepanischev Jan 2013 http://bolknote.ru/
 
-# set -o functrace
-# trap "DEBUG=1" DEBUG
-
 :|sed -E '' 2>&- && Class.sed() { sed -E "$@"; } || Class.sed() { sed -r "$@"; }
 
 Class.rename() {
@@ -24,6 +21,17 @@ Class.copy() {
         eval "$2() { local Self=${2//.*}; $(declare -f $1 |
             tail -f +3 |
             Class.sed 's/\{?Self\[(@'${!vars}')\]\}?/'${2//.*}'_Static_\1/g')"
+    fi
+}
+
+Class.var() {
+    local name=${1#*.}__$2
+
+    if [ -z "$3" ]; then
+        echo -n ${!name}
+    else
+        # присваиваем значения, пропуская знак «равно»
+        printf -v $name "${3#=}"
     fi
 }
 
@@ -82,8 +90,10 @@ Class.New() {
     local line=${BASH_LINENO[1]}
     local methods=CLASSES_M_$1
 
-    local obj=Object.f$(md5 <<< "$1 $file $line $RANDOM $(date)")
+    # Выбираем уникальное имя для объекта
+    local obj=@:Object.f$(md5 <<< "$1 $file $line $RANDOM $(date)")
 
+    # Копируем все методы объекта из класса и из родительских классов
     for name in ${!methods}; do
         local newname=$obj.${name##*.}
 
@@ -94,9 +104,17 @@ Class.New() {
         Class.copy $name $newname $obj "$1"
     done
 
-    eval "$2=$obj"
+    # Создаём перехватывающие функции для свойств
+    local vars=CLASSES_V_$1
+    for name in $(tr '|' ' ' <<< "${!vars}"); do
+        eval "$obj.$name() { Class.var \"$obj\" \"$name\" \"\$@\"; }"
+    done
+
+    # Передаём имя объекта в переменную
+    printf -v $2 $obj
     shift 2
 
+    # Вызываем конструктор, если он есть
     Class.exists $obj.__construct && $obj.__construct "$@"
 }
 
@@ -141,23 +159,20 @@ Class.New() {
     done
 }
 
-# Функция, ищущая неупоминаемые классы и уничтожающая их
+# Функция, ищущая неупоминаемые объекты и уничтожающая их
 @Class.gc() {
+    # Значения всех переменных
     local vars=$(set -o posix; set)
 
-    for name in $( typeset -F | grep -o " Object\.[^ ]*" | cut -d. -f2 | sort -ud ); do
-        if ! grep -q "Object.$name$" <<< "$vars"; then
-            @Destroy "Object.$name"
+    # Ищем все объекты и смотрим, упоминаются ли они в переменных
+    for name in $( typeset -F | grep -o " @:Object\.[^ ]*" | cut -d. -f2 | sort -ud ); do
+        if ! grep -q "@:Object.$name$" <<< "$vars"; then
+            @Destroy "@:Object.$name"
         fi
     done
 }
 
 # Включение автоматического сборщика мусора (медленно!)
 @Class.gc.on() {
-    trap @Class.gc DEBUG
-}
-
-# Выключение автоматического сборщика мусора
-@Class.gc.off() {
-    trap - DEBUG
+    trap @Class.gc DEBUG EXIT
 }
