@@ -1,6 +1,9 @@
 #!/bin/bash
 # Evgeny.Stepanischev Jan 2013 http://bolknote.ru/
 
+# set -o functrace
+# trap "DEBUG=1" DEBUG
+
 :|sed -E '' 2>&- && Class.sed() { sed -E "$@"; } || Class.sed() { sed -r "$@"; }
 
 Class.rename() {
@@ -122,6 +125,7 @@ Class.New() {
     printf -v $methods "${!methods} $parentmethods"
 }
 
+# Функция, уничтожающая класс
 @Destroy() {
     # вызываем деструктор, если он есть
     Class.exists $1.__destruct && $1.__destruct
@@ -135,4 +139,25 @@ Class.New() {
     for name in $( (set -o posix; set) | grep -o "^${1//*.}__[^=]*=" ); do
         unset ${name%%=}
     done
+}
+
+# Функция, ищущая неупоминаемые классы и уничтожающая их
+@Class.gc() {
+    local vars=$(set -o posix; set)
+
+    for name in $( typeset -F | grep -o " Object\.[^ ]*" | cut -d. -f2 | sort -ud ); do
+        if ! grep -q "Object.$name$" <<< "$vars"; then
+            @Destroy "Object.$name"
+        fi
+    done
+}
+
+# Включение автоматического сборщика мусора (медленно!)
+@Class.gc.on() {
+    trap @Class.gc DEBUG
+}
+
+# Выключение автоматического сборщика мусора
+@Class.gc.off() {
+    trap - DEBUG
 }
