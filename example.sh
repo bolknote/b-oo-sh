@@ -29,6 +29,11 @@
         $This.IncCnt
         echo 'Bow-wow!'
     }
+
+    @Dim
+    __destruct() {
+        echo "$Self dying!"
+    }
 @End
 
 @Class Car Base
@@ -49,13 +54,14 @@
     }
 @End
 
-
 Proxy.getInstance Car car
 Proxy.getInstance Dog dog
 
 $car.say
 $car.say
 $car.GetCnt
+
+$dog.cnt =100
 
 $dog.say
 $dog.GetCnt
@@ -67,6 +73,8 @@ $anothedog.say
 
 $anothedog.GetCnt
 
+unset anothedog
 
+@Class.gc
 
-
+echo Done
