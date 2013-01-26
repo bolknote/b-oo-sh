@@ -25,7 +25,7 @@ Class.copy() {
 }
 
 Class.exists() {
-    typeset -f | grep -qF "$1"
+    typeset -F | grep -qF "$1"
 }
 
 Class.append() {
@@ -120,4 +120,19 @@ Class.New() {
     unset CLASS_NAME
 
     printf -v $methods "${!methods} $parentmethods"
+}
+
+@Destroy() {
+    # вызываем деструктор, если он есть
+    Class.exists $1.__destruct && $1.__destruct
+
+    # Удаляем все имена функций объекта
+    for name in $(typeset -F | grep -o " $1[^ ]*"); do
+        unset -f "$name"
+    done
+
+    # Удаляем все свойства объекта
+    for name in $( (set -o posix; set) | grep -o "^${1//*.}__[^=]*=" ); do
+        unset ${name%%=}
+    done
 }
